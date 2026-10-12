@@ -3,6 +3,7 @@
 pkgbase=parch-wallpapers
 pkgname=(
   parch-wallpaper-auroralayers
+  parch-wallpaper-cultural
   parch-wallpaper-damavand
   parch-wallpaper-geometric
   parch-wallpaper-imaginary-landscape
@@ -16,7 +17,7 @@ pkgname=(
   parch-wallpaper-sketchy-background
   parch-wallpapers
 )
-pkgver=2.1
+pkgver=2.5
 pkgrel=1
 pkgdesc='Meta package for all Parch Linux wallpapers'
 arch=("any")
@@ -27,6 +28,7 @@ md5sums=('SKIP')
 
 _folders=(
   "AuroraLayers"
+  "Cultural"
   "damavand"
   "Geometric-wallpapers"
   "Imaginary_landscape"
@@ -42,6 +44,7 @@ _folders=(
 
 declare -A _pkgname_map=(
   ["AuroraLayers"]="parch-wallpaper-auroralayers"
+  ["Cultural"]="parch-wallpaper-cultural"
   ["damavand"]="parch-wallpaper-damavand"
   ["Geometric-wallpapers"]="parch-wallpaper-geometric"
   ["Imaginary_landscape"]="parch-wallpaper-imaginary-landscape"
@@ -57,12 +60,20 @@ declare -A _pkgname_map=(
 
 prepare() {
     cd "$srcdir/arts/Wallpaper"
+    if [[ -f "$startdir/mkgnome.sh" ]]; then
+        cp "$startdir/mkgnome.sh" ./mkgnome.sh
+    fi
     bash mkgnome.sh
 }
 
 package_parch-wallpaper-auroralayers() {
     pkgdesc='AuroraLayers wallpapers'
     _install_folder "$srcdir/arts/Wallpaper/AuroraLayers"
+}
+
+package_parch-wallpaper-cultural() {
+    pkgdesc='Cultural wallpapers'
+    _install_folder "$srcdir/arts/Wallpaper/Cultural"
 }
 
 package_parch-wallpaper-damavand() {
@@ -124,6 +135,7 @@ package_parch-wallpapers() {
     pkgdesc='Wallpapers for Parch Linux (meta package)'
     depends=(
         parch-wallpaper-auroralayers
+        parch-wallpaper-cultural
         parch-wallpaper-damavand
         parch-wallpaper-geometric
         parch-wallpaper-imaginary-landscape
@@ -137,9 +149,6 @@ package_parch-wallpapers() {
         parch-wallpaper-sketchy-background
     )
 
-    install -Dm644 "$srcdir/arts/Wallpaper/parch-wallpapers.xml" \
-        "${pkgdir}/usr/share/gnome-background-properties/parch-wallpapers.xml"
-
     install -Dm644 "${srcdir}/arts/LICENSE" \
         "${pkgdir}/usr/share/licenses/parch-wallpapers/LICENSE"
 }
@@ -148,8 +157,19 @@ _install_folder() {
     local folder="$1"
     local folder_name
     folder_name=$(basename "$folder")
+    local xml_file="$srcdir/arts/Wallpaper/${pkgname}.xml"
 
     install -d "${pkgdir}/usr/share/wallpapers/${folder_name}"
-    find "$folder" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) \
-        -exec install -Dm644 {} "${pkgdir}/usr/share/wallpapers/${folder_name}/$(basename {})" \;
+    find "$folder" -maxdepth 1 -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.svg" \) \
+        -exec install -Dm644 -t "${pkgdir}/usr/share/wallpapers/${folder_name}/" {} +
+
+    if [[ -f "$xml_file" ]]; then
+        install -Dm644 "$xml_file" \
+            "${pkgdir}/usr/share/gnome-background-properties/${pkgname}.xml"
+    fi
+
+    install -Dm644 "${srcdir}/arts/LICENSE" \
+        "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }
+
+
